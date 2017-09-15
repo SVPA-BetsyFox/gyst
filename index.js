@@ -138,6 +138,16 @@ let parse_scenario_outline = function(token, lexer) {
 }
 
 
+let parser = {
+	"UNKNOWN":	(token, lexer) => error(token, `Undefined command: "${token.value.data}"`),
+	"SCENARIO":	(token, lexer) => execution_list.push(token.value),
+	"FEATURE":	(token, lexer) => parse_feature(token, lexer),
+	"SCENARIO":	(token, lexer) => parse_feature(token, lexer),
+	"PROCEDURE":	(token, lexer) => parse_feature(token, lexer),
+	"SCENARIOOUTLINE":	(token, lexer) => parse_feature(token, lexer)
+}
+
+
 let parse = function(lexer) {
 	let token = lexer.next();
 	while (!token.done) {
@@ -165,6 +175,7 @@ let parse = function(lexer) {
 		}
 		token = lexer.next("default");
 	}
+	return true;
 }
 
 
