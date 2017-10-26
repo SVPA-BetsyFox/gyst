@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+_debug = false;
+
 let chalk = require('chalk');
 let clear = require('clear');
 // let cli         = require('cli');
@@ -14,6 +16,7 @@ let { heading, log } = require('./lib/common.js');
 
 let world = {};
 
+let debug = (...args) => { if(_debug) { for(arg of args) console.log(arg); console.log("=".repeat(80)) } }
 // let { functions, pre, post }
 
 args = process.argv;
@@ -41,20 +44,25 @@ let error = function(token, msg) {
 	console.log(chalk.red(`Error at ${token.value.src}:${token.value.row}:${token.value.col}, ${msg}\n`));
 }
 
+let indent = (level) => {
+	return "  ".repeat(level);
+}
 
-let execute = function(callstack) {
+
+let execute = function(callstack, _level=0) {
 	if (callstack instanceof Array) {
-		console.log("callstack is totes an array")
+		console.log(indent(_level) + "callstack is totes an array");
+		_level++;
 		for (x of callstack) {
-			execute(x.data);
+			execute(x.data, _level);
 		}
 	} else if (callstack instanceof Function) {
+		console.log(indent(_level) + "callstack is totes a function");
 		callstack.apply(world);
-		console.log("callstack is totes a function");
 	} else if (typeof callstack == "string") {
-		console.log("callstack is totes a string" + callstack)
+		console.log(indent(_level) + "callstack is totes a string" + callstack)
 	} else {
-		console.log("Well, callstack was neither an array, a function, or a string...: " + callstack);
+		console.log(indent(_level) + "Well, callstack was neither an array, a function, or a string...: " + callstack);
 	}
 	// console.log(callstack);
 	// switch (typeof callstack) {
@@ -151,26 +159,30 @@ let parser = {
 let parse = function(lexer) {
 	let token = lexer.next();
 	while (!token.done) {
-		// console.log(token.value.data);
 		switch (token.value.type) {
 			case "UNKNOWN":
 				error(token, `Undefined command: "${token.value.data}"`)
 				return false;
 			case "FEATURE":
+				debug("FOUND Feature:", token.value);
 				parse_feature(token, lexer);
 				break;
 			case "SCENARIO":
+				debug("FOUND Scenario:", token.value);
 				execution_list.push(token.value);
 			case "PROCEDURE":
+				debug("FOUND Procedure:", token.value);
 				registry.register(token.value.data, parse_procedure(token, lexer));
 				break;
 			case "SCENARIOOUTLINE":
+				debug("FOUND Scenario Outline:", token.value);
 				parse_scenario_outline(token, lexer);
 				break;
 			case "WHITESPACE":
 			case "NEWLINE":
 				break;
 			default:
+				debug("FOUND Something else:", token.value);
 				break;
 		}
 		token = lexer.next("default");
@@ -184,9 +196,9 @@ args.forEach(function(val, index) {
 	specFile = specFiles.next();
 	let i = 0;
 	while (!specFile.done) {
-		console.log(++i);
+		// console.log(++i);
 		if (specFile.value.toLowerCase().endsWith("world.js")) {
-			console.log("found a world file");
+			console.log(`Processing a world file: ${specFile.value}`);
 			world = require(specFile.value);
 			// console.log(world);
 		} else if (specFile.value.toLowerCase().endsWith(".specs")) {

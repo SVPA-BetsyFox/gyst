@@ -29,11 +29,17 @@ Procedure: have a spider
 	When I pay for the spider
 	Then I should have a spider
 
-Scenario: run some native code
+Scenario Outline: run some native code
   #{ console.log("this is some native code.") }#
   #{ console.log("this is more native code that should in a different function block.");
   console.log("this is on another line in the same function block.");
   console.log("third line in function block!"); }#
+
+Examples:
+	| table heading 1 | table heading 2 | table heading 3 |
+	| table data 1    | table data 2    | table data 3    |
+	| table data 4    | table data 5    | table data 6    |
+	| table data 7    | table data 8    | table data 9    |
 
 Scenario: burn it to the ground
 	Given I am at SpiderMart
@@ -42,4 +48,3 @@ Scenario: burn it to the ground
 	And I find a spider
 	When I pay for the spider
 	Then I should have a spider
-	Then burn it to the ground
