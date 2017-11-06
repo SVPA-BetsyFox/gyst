@@ -42,40 +42,40 @@ let error = function(token, msg) {
 }
 
 
-let execute = function(callstack) {
-	if (callstack instanceof Array) {
-		console.log("callstack is totes an array")
-		for (x of callstack) {
+let execute = function(call) {
+	if (call instanceof Array) {
+		console.log("call is totes an array")
+		for (x of call) {
 			execute(x.data);
 		}
-	} else if (callstack instanceof Function) {
-		callstack.apply(world);
-		console.log("callstack is totes a function");
-	} else if (typeof callstack == "string") {
-		console.log("callstack is totes a string" + callstack)
+	} else if (call instanceof Function) {
+		call.apply(world);
+		console.log("call is totes a function");
+	} else if (typeof call == "string") {
+		console.log(`call is totes a string: ${call}`)
 	} else {
-		console.log("Well, callstack was neither an array, a function, or a string...: " + callstack);
+		console.log("Well, call was neither an array, a function, or a string...: " + call);
 	}
-	// console.log(callstack);
-	// switch (typeof callstack) {
+	// console.log(call);
+	// switch (typeof call) {
 	// 	case "object":
-	// 		callstack.forEach(function(x) {
+	// 		call.forEach(function(x) {
 	// 			console.log(`EXECUTING ${x.data} FROM ${x.src}:${x.row}:${x.col}`);
 	// 			if (x.type == 'CALLPROC') execute(x.data);
 	// 			else execute(registry.get_function(x.data));
 	// 		});
 	// 		break;
 	// 	case "string":
-	// 		execute(registry.get_function(callstack));
+	// 		execute(registry.get_function(call));
 	// 		break;
 	// 	case "function":
-	// 		console.log(callstack);
+	// 		console.log(call);
 	// 	default:
-	// 		// console.log(`We hit something that wasn't a string or an object/array- typeof is "${typeof callstack}" and the value is "${callstack}"`);
+	// 		// console.log(`We hit something that wasn't a string or an object/array- typeof is "${typeof call}" and the value is "${call}"`);
 	// 		break;
 	// }
-	// if (typeof callstack == "object") {
-	// 	callstack.forEach(function(x) {
+	// if (typeof call == "object") {
+	// 	call.forEach(function(x) {
 	// 		 console.log("EXECUTING", x.data);
 	// 		if (x.type == 'CALLPROC')
 	// 			execute(x.data);
@@ -112,6 +112,7 @@ let parse_procedure = function(token, lexer) {
 	}
 	return stack;
 }
+
 
 let wrap_function = function(s) {
 	return `(function(){${s}})`;
@@ -161,6 +162,7 @@ let parse = function(lexer) {
 			case "NEWLINE":
 				break;
 			default:
+			// console.log(token.value);
 				break;
 		}
 		token = lexer.next("default");
