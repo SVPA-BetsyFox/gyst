@@ -10,6 +10,7 @@ Feature: Tags!
 Scenario: eat 5 out of 20
 	Given there are 20 cucumbers
 	When I eat 5 cucumbers
+	#{ console.log("this is some native code.") }#
 	Then I should have 15 cucumbers
 	GIVEN wjhbdsfsd
 
