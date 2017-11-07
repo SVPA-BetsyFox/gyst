@@ -42,6 +42,10 @@ let error = function(token, msg) {
 }
 
 
+
+//////////////////////////////////////
+/// EXECUTE //////////////////////////
+//////////////////////////////////////
 let execute = function(call) {
 	if (call instanceof Array) {
 		console.log("call is totes an array")
@@ -52,7 +56,11 @@ let execute = function(call) {
 		call.apply(world);
 		console.log("call is totes a function");
 	} else if (typeof call == "string") {
-		console.log(`call is totes a string: ${call}`)
+		//we're probably dealing with a procedure call
+		//todo: expand proc call
+		console.log(`call is totes a string (probably a procedure call!): ${call}`)
+		let func = registry.get_function(call);
+		console.log(func);
 	} else {
 		console.log("Well, call was neither an array, a function, or a string...: " + call);
 	}
@@ -102,7 +110,9 @@ let parse_procedure = function(token, lexer) {
 				stack.push(token.value);
 				break;
 			case "NATIVE":
-				stack.push(parse_native(token, lexer));
+				let func = parse_native(token, lexer);
+				console.log(`NATIVE FUNCTION: ${func.toString()}`);
+				stack.push(func);
 				break;
 			case "UNKNOWN":
 				error(token, `Unexpected token: "${token.value.data}"`);
@@ -115,7 +125,7 @@ let parse_procedure = function(token, lexer) {
 
 
 let wrap_function = function(s) {
-	return `(function(){${s}})`;
+	return eval(`(function(){${s}})`);
 }
 
 
@@ -125,6 +135,7 @@ let parse_native = function(token, lexer) {
 		out.push(token.value.data)
 		token = lexer.next();
 	}
+	out.shift();
 	return wrap_function(out.join("\n"));
 }
 
@@ -136,6 +147,18 @@ let parse_scenario_outline = function(token, lexer) {
 	//once read in, adjust the calling line so it has parameters matching the ones given in examples table
 	//NOW register procedure
 	//NOW add an execute call to the procedure, once for each line of the examples table
+}
+
+
+let compile = function(proc_name) {
+	let out = [];
+	let func = register.get_function(proc_name);
+	if (typeof func != "function") {
+		out.push(compile(func));
+	} else {
+		out.push(func);
+	}
+	return out;
 }
 
 
@@ -190,6 +213,7 @@ args.forEach(function(val, index) {
 	}
 
 	// registry.dump();
-
+	console.log("ABOUT TO EXECUTE THIS THING");
+	// console.log(execution_list);
 	execute(execution_list);
 });
