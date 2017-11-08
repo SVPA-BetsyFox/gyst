@@ -1,10 +1,9 @@
 Feature: Broken spec file
 Given I provide a broken spec file
-
-
 Then I should always error out on the next line
-⚡️↩️Ⓕ💰↩️Ⓕ↩️⚡️Ⓕ↩️Ⓕ💰↩️⚡️Ⓕ
-Broken file, this a broken file
-this is a clearly broken fikle
-           dfgbldfsgnhkjfgnshkjfgnh fgdhf dd
-           Given I am a legit line
+#{  this is some code  }
+   #⚡️↩️Ⓕ💰↩️Ⓕ↩️⚡️Ⓕ↩️Ⓕ💰↩️⚡️Ⓕ
+#Broken file, this a broken file
+# this is a clearly broken fikle
+           # dfgbldfsgnhkjfgnshkjfgnh fgdhf dd
+           # Given I am a legit line

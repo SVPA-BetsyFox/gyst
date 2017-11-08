@@ -43,10 +43,8 @@ let error = function(token, msg) {
 
 
 
-//////////////////////////////////////
-/// EXECUTE //////////////////////////
-//////////////////////////////////////
 let execute = function(call) {
+	debug(`Attempting exection of ${call}`);
 	if (call instanceof Array) {
 		console.log("call is totes an array")
 		for (x of call) {
@@ -62,36 +60,8 @@ let execute = function(call) {
 		let func = registry.get_function(call);
 		console.log(func);
 	} else {
-		console.log("Well, call was neither an array, a function, or a string...: " + call);
+		throw(`Attempt to execute "${call}" failed because it is not a string or a function.`);
 	}
-	// console.log(call);
-	// switch (typeof call) {
-	// 	case "object":
-	// 		call.forEach(function(x) {
-	// 			console.log(`EXECUTING ${x.data} FROM ${x.src}:${x.row}:${x.col}`);
-	// 			if (x.type == 'CALLPROC') execute(x.data);
-	// 			else execute(registry.get_function(x.data));
-	// 		});
-	// 		break;
-	// 	case "string":
-	// 		execute(registry.get_function(call));
-	// 		break;
-	// 	case "function":
-	// 		console.log(call);
-	// 	default:
-	// 		// console.log(`We hit something that wasn't a string or an object/array- typeof is "${typeof call}" and the value is "${call}"`);
-	// 		break;
-	// }
-	// if (typeof call == "object") {
-	// 	call.forEach(function(x) {
-	// 		 console.log("EXECUTING", x.data);
-	// 		if (x.type == 'CALLPROC')
-	// 			execute(x.data);
-	// 		// console.log(functions.get(x.data));
-	// 	});
-	// } else {
-	// 	// console.log(functions.get(x.data));
-	// }
 }
 
 
@@ -103,29 +73,28 @@ let parse_feature = function(token, lexer) {
 
 
 let parse_procedure = function(token, lexer) {
-	let stack = [];
+	let calls = [];
 	while (!token.done && token.value.type != "ENDBLOCK") {
 		switch (token.value.type) {
 			case "CALLPROC":
-				stack.push(token.value);
+				let compiled = compile(token.value.data);
+				if (compiled) calls.push(compiled);
+				else calls.push(token.value.data);
 				break;
 			case "NATIVE":
 				let func = parse_native(token, lexer);
 				console.log(`NATIVE FUNCTION: ${func.toString()}`);
-				stack.push(func);
+				calls.push(func);
 				break;
 			case "UNKNOWN":
 				error(token, `Unexpected token: "${token.value.data}"`);
-				return false;
+				// return false;
+			default:
+				calls.push(token.value.data);
 		}
 		token = lexer.next();
 	}
-	return stack;
-}
-
-
-let wrap_function = function(s) {
-	return eval(`(function(){${s}})`);
+	return calls.reduce((acc, cur) => acc.concat(cur), []);
 }
 
 
@@ -136,7 +105,7 @@ let parse_native = function(token, lexer) {
 		token = lexer.next();
 	}
 	out.shift();
-	return wrap_function(out.join("\n"));
+	return eval(`(function() {\n${out.join("\n")}\n})`);
 }
 
 
@@ -151,12 +120,25 @@ let parse_scenario_outline = function(token, lexer) {
 
 
 let compile = function(proc_name) {
+	// console.log(`Attempting to compile`, proc_name);
 	let out = [];
-	let func = register.get_function(proc_name);
-	if (typeof func != "function") {
-		out.push(compile(func));
-	} else {
-		out.push(func);
+	let func = registry.get_function(proc_name);
+	switch(typeof func) {
+		case "string":
+			out.push(compile(func));
+			break;
+		case "function":
+			out.push(func);
+			break;
+		case "object":
+			if (func instanceof Array) {
+				func.forEach(x => out.push(compile(x)));
+			} else {
+				// console.log("uhhhh", func);
+			}
+		default:
+			console.log(`COMPILE() SAYS "${proc_name}" is a ${typeof func}`);
+			break;
 	}
 	return out;
 }
@@ -198,7 +180,6 @@ args.forEach(function(val, index) {
 	specFile = specFiles.next();
 	let i = 0;
 	while (!specFile.done) {
-		console.log(++i);
 		if (specFile.value.toLowerCase().endsWith("world.js")) {
 			console.log("found a world file");
 			world = require(specFile.value);
@@ -211,9 +192,24 @@ args.forEach(function(val, index) {
 		}
 		specFile = specFiles.next();
 	}
+	console.log(execution_list.length);
+		execution_list = execution_list.map(x => {
+			// console.log(`* PROCESSING ${x.data}`);
+			// console.log(compile(x.data));
+			return (x || compile(x.data));
+		});
+	// let undefined_calls = registry.get_undefined();
+	// if (undefined_calls.length > 0) {
+	// 	console.log(`Found ${undefined_calls.length} undefined procedures, checking final definitions...`);
+	// 	// console.log(`\n${undefined_calls.join("\n")}\n`);
+	// 	// 
 
-	// registry.dump();
-	console.log("ABOUT TO EXECUTE THIS THING");
-	// console.log(execution_list);
-	execute(execution_list);
+	// 	undefined_calls = registry.get_undefined();
+	// 	if (undefined_calls.length > 0) {
+	// 		console.log(`Found ${undefined_calls.length} undefined procedures during final pass:`);
+	// 		console.log(`\n${undefined_calls.join("\n")}\n`);
+	// 	}
+	// } else {
+	// 	execute(execution_list);
+	// }
 });
