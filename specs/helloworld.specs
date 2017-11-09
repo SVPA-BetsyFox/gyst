@@ -1,0 +1,15 @@
+@TAG1     @tag2 @munge  
+      @indentedtag
+Feature: Tags!
+  Given I am nothing but exposition
+
+Scenario: Run a simple function call
+  Given I run a simple function call
+  # When I call that function
+  # Then output will be displayed
+
+Procedure: I run a simple function call
+  #{
+  console.log("Oh, hello.");
+  console.log("Goodbye");
+   }#

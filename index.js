@@ -2,45 +2,22 @@
 
 let chalk = require('chalk');
 let clear = require('clear');
-// let cli         = require('cli');
 let figlet = require('figlet');
 let fs = require('fs');
-let files = require('./lib/files.js');
-let registry = require('./lib/registry.js')();
-
+let files = require('./lib/files');
+let registry = require('./lib/registry')();
+let { splash, error, argv } = require('./lib/cli');
 let {	lexer } = require('bluesocks');
 let rules = require('./lib/rules');
-let { heading, log } = require('./lib/common.js');
+let { heading, log } = require('./lib/common');
 
+
+
+splash(false);
+
+let args = argv();
 let world = {};
-
-// let { functions, pre, post }
-
-args = process.argv;
-args.shift();
-args.shift();
-
-
-
 let execution_list = [];
-
-let splash = function() {
-	clear();
-	console.log(
-		chalk.green(figlet.textSync('Gyst', {
-			font: "doom",
-			horizontalLayout: 'default'
-		})),
-		"\n",
-		chalk.blue(" version " + require('./package.json').version)
-	);
-}
-
-
-let error = function(token, msg) {
-	console.log(chalk.red(`Error at ${token.value.src}:${token.value.row}:${token.value.col}, ${msg}\n`));
-}
-
 
 
 let execute = function(call) {
@@ -58,39 +35,39 @@ let execute = function(call) {
 		//todo: expand proc call
 		console.log(`call is totes a string (probably a procedure call!): ${call}`)
 		let func = registry.get_function(call);
-		console.log(func);
+		// console.log(func);
 	} else {
 		throw(`Attempt to execute "${call}" failed because it is not a string or a function.`);
 	}
 }
 
 
-let parse_feature = function(token, lexer) {
+let feature = function(token, lexer) {
 	while (!token.done && token.value.type != "ENDBLOCK") {
 		token = lexer.next();
 	}
 }
 
 
-let parse_procedure = function(token, lexer) {
+let procedure = function(token, lexer) {
 	let calls = [];
+	let item;
+	token = lexer.next();
 	while (!token.done && token.value.type != "ENDBLOCK") {
 		switch (token.value.type) {
 			case "CALLPROC":
-				let compiled = compile(token.value.data);
-				if (compiled) calls.push(compiled);
-				else calls.push(token.value.data);
+				calls.push(token.value.data);
 				break;
 			case "NATIVE":
-				let func = parse_native(token, lexer);
-				console.log(`NATIVE FUNCTION: ${func.toString()}`);
-				calls.push(func);
+				calls.push(native(token, lexer));
 				break;
 			case "UNKNOWN":
-				error(token, `Unexpected token: "${token.value.data}"`);
-				// return false;
 			default:
-				calls.push(token.value.data);
+				console.log(`Procedure contains unexpected "${token.value.type}" token: "${token.value.data}"`);
+			case "WHITESPACE":
+			case "COMMENT":
+			case "NEWLINE":
+				break;
 		}
 		token = lexer.next();
 	}
@@ -98,7 +75,7 @@ let parse_procedure = function(token, lexer) {
 }
 
 
-let parse_native = function(token, lexer) {
+let native = function(token, lexer) {
 	let out = [];
 	while (!token.done && token.value.type != "ENDBLOCK") {
 		out.push(token.value.data)
@@ -109,7 +86,7 @@ let parse_native = function(token, lexer) {
 }
 
 
-let parse_scenario_outline = function(token, lexer) {
+let scenario_outline = function(token, lexer) {
 	// let token = lexer.next();
 	//read in as a procedure, but don't register just yet...
 	//read in examples table
@@ -134,7 +111,7 @@ let compile = function(proc_name) {
 			if (func instanceof Array) {
 				func.forEach(x => out.push(compile(x)));
 			} else {
-				// console.log("uhhhh", func);
+				console.log("this isn't an array?", func);
 			}
 		default:
 			console.log(`COMPILE() SAYS "${proc_name}" is a ${typeof func}`);
@@ -144,24 +121,24 @@ let compile = function(proc_name) {
 }
 
 
+
 let parse = function(lexer) {
 	let token = lexer.next();
 	while (!token.done) {
-		// console.log(token.value.data);
 		switch (token.value.type) {
 			case "UNKNOWN":
 				error(token, `Undefined command: "${token.value.data}"`)
 				return false;
 			case "FEATURE":
-				parse_feature(token, lexer);
+				feature(token, lexer);
 				break;
 			case "SCENARIO":
-				execution_list.push(token.value);
+				execution_list.push(token.value.data);
 			case "PROCEDURE":
-				registry.register(token.value.data, parse_procedure(token, lexer));
+				registry.register(token.value.data, procedure(token, lexer));
 				break;
 			case "SCENARIOOUTLINE":
-				parse_scenario_outline(token, lexer);
+				scenario_outline(token, lexer);
 				break;
 			case "WHITESPACE":
 			case "NEWLINE":
@@ -175,6 +152,28 @@ let parse = function(lexer) {
 }
 
 
+// let validate = function(proc_name) {
+// 	console.log(`About to validate "${proc_name}", which is a ${typeof proc_name}`);
+// 	let func = registry.get_function(proc_name);
+// 	let out = [];
+// 	switch (typeof func) {
+// 		case "string":
+// 			out.push(validate(registry.get_function(func)));
+// 			break;
+// 		case "function":
+// 			out.push(true);
+// 			break;
+// 		case "object":
+// 			Object.keys(func).forEach(x => {
+// 				out.push(validate(func[x]));
+// 			});
+// 			break;
+// 		}
+// 	return out;
+// 	}
+
+
+
 args.forEach(function(val, index) {
 	specFiles = files.ls(`${process.cwd()}/${val}`);
 	specFile = specFiles.next();
@@ -183,7 +182,6 @@ args.forEach(function(val, index) {
 		if (specFile.value.toLowerCase().endsWith("world.js")) {
 			console.log("found a world file");
 			world = require(specFile.value);
-			// console.log(world);
 		} else if (specFile.value.toLowerCase().endsWith(".specs")) {
 			heading(`Processing ${specFile.value}...`);
 			let data = files.read(specFile.value);
@@ -192,17 +190,19 @@ args.forEach(function(val, index) {
 		}
 		specFile = specFiles.next();
 	}
-	console.log(execution_list.length);
-		execution_list = execution_list.map(x => {
-			// console.log(`* PROCESSING ${x.data}`);
-			// console.log(compile(x.data));
-			return (x || compile(x.data));
-		});
-	// let undefined_calls = registry.get_undefined();
-	// if (undefined_calls.length > 0) {
-	// 	console.log(`Found ${undefined_calls.length} undefined procedures, checking final definitions...`);
-	// 	// console.log(`\n${undefined_calls.join("\n")}\n`);
-	// 	// 
+
+	console.log(`Execution list contains ${execution_list.length} items...`);
+	registry.dump();
+
+	execution_list = execution_list.map(x => {
+		return (compile(x) || x);
+	});
+	let undefined_calls = registry.get_undefined();
+	if (undefined_calls.length > 0) {
+		console.log(`Found ${undefined_calls.length} undefined procedures, checking final definitions...`);
+		console.log(`\n${undefined_calls.join("\n")}\n`);
+	}
+
 
 	// 	undefined_calls = registry.get_undefined();
 	// 	if (undefined_calls.length > 0) {

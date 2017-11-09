@@ -1,0 +1,40 @@
+# @TAG1     @tag2 @munge  
+#       @indentedtag
+# Feature: Tags!
+# 	Given I am nothing but exposition
+
+# Scenario: Duct tape a spider to the garage
+# 	Given I have a garage
+# 	And I have a spider
+# 	And I have duct tape
+# 	If I successfully duct tape the spider to the garage
+# 	Then the spider should be stuck to the garage
+# 	Otherwise the spider will roam free
+
+# Procedure: I have a spider
+# 	Given I am at SpiderMart
+# 	And I go to the spider aisle
+# 	And I look for a spider
+# 	And I find a spider
+# 	When I pay for the spider
+# 	Then I should have a spider
+
+#Scenario Outline: run some native code
+#  #{ console.log("this is some native code.") }#
+#  #{ console.log("this is more native code that should in a different function block.");
+#  console.log("this is on another line in the same function block.");
+#  console.log("third line in function block!"); }#
+
+#Examples:
+	# | table heading 1 | table heading 2 | table heading 3 |
+	# | table data 1    | table data 2    | table data 3    |
+	# | table data 4    | table data 5    | table data 6    |
+	# | table data 7    | table data 8    | table data 9    |
+
+# Scenario: burn it to the ground
+# 	Given I am at SpiderMart
+# 	And I go to the spider aisle
+# 	And I look for a spider
+# 	And I find a spider
+# 	When I pay for the spider
+# 	Then I should have a spider
