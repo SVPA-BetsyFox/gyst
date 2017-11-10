@@ -199,7 +199,7 @@ args.forEach(function(val, index) {
 	});
 	let undefined_calls = registry.get_undefined();
 	if (undefined_calls.length > 0) {
-		console.log(`Found ${undefined_calls.length} undefined procedures, checking final definitions...`);
+		console.log(`Found ${undefined_calls.length} undefined procedures:`);
 		console.log(`\n${undefined_calls.join("\n")}\n`);
 	}
 
